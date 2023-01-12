@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "AKC6GI/klwRiB1puqFY4fiJBl6LCBuFveE3jE5vm/FE=",
+  "Source": "SteamNewBackend",
+  "BasePath": "_content/SteamNewBackend",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}
