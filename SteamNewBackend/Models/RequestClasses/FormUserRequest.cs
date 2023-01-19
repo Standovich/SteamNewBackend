@@ -1,4 +1,4 @@
-﻿namespace SteamNewBackend.RequestClasses
+﻿namespace SteamNewBackend.Models.DbRequestClasses
 {
     public class FormUserRequest
     {

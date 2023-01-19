@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using SteamNewBackend.Database;
 using SteamNewBackend.Models;
-using SteamNewBackend.RequestClasses;
+using SteamNewBackend.Models.DbRequestClasses;
 
 namespace SteamNewBackend.Controllers
 {
@@ -18,7 +18,7 @@ namespace SteamNewBackend.Controllers
         }
 
         [HttpPost("createUser")]
-        public ActionResult<User> Create([FromForm] FormUserRequest user)
+        public IActionResult Create([FromForm] FormUserRequest user)
         {
             try
             {
@@ -34,7 +34,7 @@ namespace SteamNewBackend.Controllers
                 {
                     _mariaDb.Users.Add(newUser);
                     _mariaDb.SaveChanges();
-                    return CreatedAtAction("getUser", new {id = newUser.Id}, user);
+                    return Ok(user);
                 }
             }
             catch
@@ -44,7 +44,7 @@ namespace SteamNewBackend.Controllers
         }
 
         [HttpGet("login")]
-        public ActionResult Login([FromForm] FormUserRequest request)
+        public IActionResult Login([FromForm] FormUserRequest request)
         {
             try
             {
@@ -65,7 +65,7 @@ namespace SteamNewBackend.Controllers
         }
 
         [HttpGet("getUser/{id}")]
-        public ActionResult GetUser(int id)
+        public IActionResult GetUser(int id)
         {
             try
             {
@@ -80,23 +80,21 @@ namespace SteamNewBackend.Controllers
             }
         }
 
-        //[HttpGet("getUsers")]
-        //public IResult GetAll()
-        //{
-        //    client = new FireSharp.FirebaseClient(config);
-        //    FirebaseResponse response = client.Get("Users");
-        //    dynamic data = JsonConvert.DeserializeObject<dynamic>(response.Body);
-        //    var list = new List<User>();
-        //    if(data != null)
-        //    {
-        //        foreach(var user in data)
-        //        {
-        //            list.Add(JsonConvert.DeserializeObject<User>(((JProperty)user).Value.ToString()));
-        //        }
-        //    }
+        [HttpGet("getUsers")]
+        public IActionResult GetUsers()
+        {
+            try
+            {
+                var users = _mariaDb.Users.ToList();
 
-        //    return list == null ? Results.NotFound() : Results.Ok(list);
-        //}
+                if (users != null) return Ok(users);
+                else return NotFound();
+            }
+            catch
+            {
+                return NotFound("Database couldn't be reached.");
+            }
+        }
 
         //[HttpPatch]
         //public IResult Update()
