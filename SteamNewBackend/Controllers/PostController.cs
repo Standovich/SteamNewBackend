@@ -7,33 +7,34 @@ namespace SteamNewBackend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class DeveloperController : ControllerBase
+    public class PostController : ControllerBase
     {
         private readonly ILogger<MariaDbContext> _logger;
         private readonly MariaDbContext _mariaDb;
-        public DeveloperController(ILogger<MariaDbContext> logger, MariaDbContext context)
+        public PostController(ILogger<MariaDbContext> logger, MariaDbContext context)
         {
             _logger = logger;
             _mariaDb = context;
         }
 
-        [HttpPost("addDeveloper")]
-        public IActionResult AddDeveloper([FromForm] FormDevTeamRequest dev)
+        [HttpPost("addPost")]
+        public IActionResult AddPost([FromForm] FormPostRequest post)
         {
             try
             {
-                DevTeam newDev = new()
+                Post newPost = new()
                 {
-                    DevTeam_name = dev.Name
+                    Post_Title = post.Title,
+                    Post_Content = post.Content
                 };
 
-                if (_mariaDb.DevTeams.Where(d => d.DevTeam_name == newDev.DevTeam_name).Any())
-                    return BadRequest("Developer team already exists!");
+                if (_mariaDb.Posts.Where(p => p.Post_Title == newPost.Post_Title).Any())
+                    return BadRequest("Post already exists!");
                 else
                 {
-                    _mariaDb.DevTeams.Add(newDev);
+                    _mariaDb.Posts.Add(newPost);
                     _mariaDb.SaveChanges();
-                    return Ok(dev);
+                    return Ok(post);
                 }
             }
             catch
@@ -42,14 +43,13 @@ namespace SteamNewBackend.Controllers
             }
         }
 
-        [HttpGet("getDeveloper/{id}")]
-        public IActionResult GetDeveloper(int id)
+        [HttpGet("getPost/{id}")]
+        public IActionResult GetPost([FromRoute] int id)
         {
             try
             {
-                var dev = _mariaDb.DevTeams.FirstOrDefault(d => d.Id == id);
-
-                if (dev != null) return Ok(dev);
+                var post = _mariaDb.Posts.FirstOrDefault(p => p.Id == id);
+                if (post != null) return Ok(post);
                 else return NotFound();
             }
             catch
@@ -58,14 +58,14 @@ namespace SteamNewBackend.Controllers
             }
         }
 
-        [HttpGet("getDevelopers")]
-        public IActionResult GetDevelopers()
+        [HttpGet("getPosts")]
+        public IActionResult GetPosts()
         {
             try
             {
-                var devTeams = _mariaDb.DevTeams.ToList();
-                
-                if(devTeams != null) return Ok(devTeams);
+                var posts = _mariaDb.Posts.ToList();
+
+                if (posts != null) return Ok(posts);
                 else return NotFound();
             }
             catch
@@ -74,17 +74,17 @@ namespace SteamNewBackend.Controllers
             }
         }
 
-        [HttpDelete("deleteDeveloper/{id}")]
-        public IActionResult DeleteDeveloper([FromRoute] int id)
+        [HttpDelete("deletePost/{id}")]
+        public IActionResult DeletePost([FromRoute] int id)
         {
             try
             {
-                var dev = _mariaDb.DevTeams.FirstOrDefault(d => d.Id == id);
-                if (dev != null)
+                var post = _mariaDb.Posts.FirstOrDefault(p => p.Id == id);
+                if (post != null)
                 {
-                    _mariaDb.DevTeams.Remove(dev);
+                    _mariaDb.Posts.Remove(post);
                     _mariaDb.SaveChanges();
-                    return Ok(dev);
+                    return Ok(post);
                 }
                 else return NotFound();
             }
@@ -94,17 +94,18 @@ namespace SteamNewBackend.Controllers
             }
         }
 
-        [HttpPut("updateDeveloper")]
-        public IActionResult UpdateDeveloper([FromForm] DevTeam newDev)
+        [HttpPut("updatePost")]
+        public IActionResult UpdatePost([FromForm] Post newPost)
         {
             try
             {
-                var dev = _mariaDb.DevTeams.FirstOrDefault(d => d.Id == newDev.Id);
-                if (dev != null)
+                var post = _mariaDb.Posts.FirstOrDefault(p => p.Id == newPost.Id);
+                if (post != null)
                 {
-                    dev.DevTeam_name = newDev.DevTeam_name;
+                    post.Post_Title = newPost.Post_Title;
+                    post.Post_Content = newPost.Post_Content;
                     _mariaDb.SaveChanges();
-                    return Ok(newDev);
+                    return Ok(newPost);
                 }
                 else return NotFound();
             }

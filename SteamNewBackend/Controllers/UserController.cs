@@ -17,12 +17,12 @@ namespace SteamNewBackend.Controllers
             _mariaDb = context;
         }
 
-        [HttpPost("createUser")]
-        public IActionResult Create([FromForm] FormUserRequest user)
+        [HttpPost("addUser")]
+        public IActionResult AddUser([FromForm] FormUserRequest user)
         {
             try
             {
-                User newUser = new User()
+                User newUser = new()
                 {
                     User_Name = user.Username,
                     User_Passwd = user.Passwd
@@ -48,7 +48,7 @@ namespace SteamNewBackend.Controllers
         {
             try
             {
-                User user = _mariaDb.Users.Where(u => u.User_Name == request.Username).FirstOrDefault();
+                var user = _mariaDb.Users.FirstOrDefault(u => u.User_Name == request.Username);
                 if (user != null)
                 {
                     if (user.User_Passwd == request.Passwd)
@@ -96,16 +96,45 @@ namespace SteamNewBackend.Controllers
             }
         }
 
-        //[HttpPatch]
-        //public IResult Update()
-        //{
-        //    return View();
-        //}
+        [HttpDelete("deleteUser/{id}")]
+        public IActionResult DeleteUser([FromRoute] int id)
+        {
+            try
+            {
+                var user = _mariaDb.Users.FirstOrDefault(u => u.Id == id);
+                if (user != null)
+                {
+                    _mariaDb.Users.Remove(user);
+                    _mariaDb.SaveChanges();
+                    return Ok(user);
+                }
+                else return NotFound();
+            }
+            catch
+            {
+                return NotFound();
+            }
+        }
 
-        //[HttpDelete]
-        //public IResult Delete()
-        //{
-        //    return View();
-        //}
+        [HttpPut("updateUser")]
+        public IActionResult UpdateUser([FromForm] User newUser)
+        {
+            try
+            {
+                var user = _mariaDb.Users.FirstOrDefault(u => u.Id == newUser.Id);
+                if (user != null)
+                {
+                    user.User_Name = newUser.User_Name;
+                    user.User_Passwd = newUser.User_Passwd;
+                    _mariaDb.SaveChanges();
+                    return Ok(newUser);
+                }
+                else return NotFound();
+            }
+            catch
+            {
+                return NotFound();
+            }
+        }
     }
 }
