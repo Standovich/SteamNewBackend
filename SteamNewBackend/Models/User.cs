@@ -13,9 +13,11 @@ namespace SteamNewBackend.Models
 
         [Required]
         [MaxLength(50)]
-        public string? User_Passwd { get; set; }
+        public string? User_Password { get; set; }
 
-        public int Tier { get; set; }
+        public string? Role { get; set; }
+
+        public string? Token { get; set; }
 
         public int DevTeam_Id { get; set; }
         public List<UserGame> UserGames { get; set; }

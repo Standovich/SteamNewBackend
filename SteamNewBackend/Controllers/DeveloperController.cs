@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using SteamNewBackend.Database;
 using SteamNewBackend.Models;
 using SteamNewBackend.Models.RequestClasses;
@@ -6,6 +7,7 @@ using SteamNewBackend.Models.RequestClasses;
 namespace SteamNewBackend.Controllers
 {
     [ApiController]
+    [Authorize]
     [Route("api/[controller]")]
     public class DeveloperController : ControllerBase
     {
@@ -28,7 +30,7 @@ namespace SteamNewBackend.Controllers
                 };
 
                 if (_mariaDb.DevTeams.Where(d => d.DevTeam_name == newDev.DevTeam_name).Any())
-                    return BadRequest("Developer team already exists!");
+                    return BadRequest();
                 else
                 {
                     _mariaDb.DevTeams.Add(newDev);
@@ -38,7 +40,7 @@ namespace SteamNewBackend.Controllers
             }
             catch
             {
-                return NotFound("Database couldn't be reached.");
+                return NotFound();
             }
         }
 
@@ -54,7 +56,7 @@ namespace SteamNewBackend.Controllers
             }
             catch
             {
-                return NotFound("Database couldn't be reached.");
+                return NotFound();
             }
         }
 
@@ -70,7 +72,7 @@ namespace SteamNewBackend.Controllers
             }
             catch
             {
-                return NotFound("Database couldn't be reached.");
+                return NotFound();
             }
         }
 

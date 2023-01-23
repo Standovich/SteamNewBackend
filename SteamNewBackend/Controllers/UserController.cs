@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using SteamNewBackend.Authentication;
 using SteamNewBackend.Database;
 using SteamNewBackend.Models;
 using SteamNewBackend.Models.DbRequestClasses;
@@ -22,14 +24,21 @@ namespace SteamNewBackend.Controllers
         {
             try
             {
+                if (user == null) return BadRequest();
+
                 User newUser = new()
                 {
                     User_Name = user.Username,
-                    User_Passwd = user.Passwd
+                    User_Password = PasswordHasher.HashPassword(user.Password),
+                    Role = user.Role,
+                    DevTeam_Id = user.DevTeam
                 };
 
                 if (_mariaDb.Users.Where(u => u.User_Name == newUser.User_Name).Any())
-                    return BadRequest("User already exists!");
+                    return BadRequest(new
+                    {
+                        Message = "User already exists!"
+                    });
                 else
                 {
                     _mariaDb.Users.Add(newUser);
@@ -39,11 +48,11 @@ namespace SteamNewBackend.Controllers
             }
             catch
             {
-                return NotFound("Database couldn't be reached.");
+                return NotFound();
             }
         }
 
-        [HttpGet("login")]
+        [HttpPost("login")]
         public IActionResult Login([FromForm] FormUserRequest request)
         {
             try
@@ -51,19 +60,35 @@ namespace SteamNewBackend.Controllers
                 var user = _mariaDb.Users.FirstOrDefault(u => u.User_Name == request.Username);
                 if (user != null)
                 {
-                    if (user.User_Passwd == request.Passwd)
-                        return Ok(user);
-                    else return NotFound("Entered password is wrong!");
+                    if (PasswordHasher.VerifyPassword(request.Password, user.User_Password))
+                    {
+                        user.Token = JwtHandler.CreateJwt(user);
+                        return Ok(new
+                        {
+                            Token = user.Token
+                        });
+                    }
+                    else return BadRequest(new
+                    {
+                        Message = "Wrong password!"
+                    });
 
                 }
-                else return NotFound("User doesn't exist!");
+                else return BadRequest(new
+                {
+                    Message = "User not found!"
+                });
             }
             catch
             {
-                return NotFound("Database couldn't be reached.");
+                return NotFound(new
+                {
+                    Message = "Login failed!"
+                });
             }
         }
 
+        [Authorize]
         [HttpGet("getUser/{id}")]
         public IActionResult GetUser(int id)
         {
@@ -76,10 +101,11 @@ namespace SteamNewBackend.Controllers
             }
             catch
             {
-                return NotFound("Database couldn't be reached.");
+                return NotFound();
             }
         }
 
+        [Authorize]
         [HttpGet("getUsers")]
         public IActionResult GetUsers()
         {
@@ -92,10 +118,11 @@ namespace SteamNewBackend.Controllers
             }
             catch
             {
-                return NotFound("Database couldn't be reached.");
+                return NotFound();
             }
         }
 
+        [Authorize]
         [HttpDelete("deleteUser/{id}")]
         public IActionResult DeleteUser([FromRoute] int id)
         {
@@ -116,6 +143,7 @@ namespace SteamNewBackend.Controllers
             }
         }
 
+        [Authorize]
         [HttpPut("updateUser")]
         public IActionResult UpdateUser([FromForm] User newUser)
         {
@@ -125,7 +153,9 @@ namespace SteamNewBackend.Controllers
                 if (user != null)
                 {
                     user.User_Name = newUser.User_Name;
-                    user.User_Passwd = newUser.User_Passwd;
+                    user.User_Password = newUser.User_Password;
+                    user.Role = newUser.Role;
+                    user.DevTeam_Id = newUser.DevTeam_Id;
                     _mariaDb.SaveChanges();
                     return Ok(newUser);
                 }

@@ -3,10 +3,12 @@ using Microsoft.AspNetCore.Mvc;
 using SteamNewBackend.Database;
 using SteamNewBackend.Models.RequestClasses;
 using SteamNewBackend.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace SteamNewBackend.Controllers
 {
     [ApiController]
+    [Authorize]
     [Route("api/[controller]")]
     public class GameController : ControllerBase
     {
@@ -33,7 +35,7 @@ namespace SteamNewBackend.Controllers
                 };
 
                 if (_mariaDb.Games.Where(g => g.Game_Name == newGame.Game_Name).Any())
-                    return BadRequest("Game already exists!");
+                    return BadRequest();
                 else
                 {
                     _mariaDb.Games.Add(newGame);
@@ -43,7 +45,7 @@ namespace SteamNewBackend.Controllers
             }
             catch
             {
-                return NotFound("Database couldn't be reached.");
+                return NotFound();
             }
         }
 
@@ -58,7 +60,7 @@ namespace SteamNewBackend.Controllers
             }
             catch
             {
-                return NotFound("Database couldn't be reached.");
+                return NotFound();
             }
         }
 
@@ -74,7 +76,7 @@ namespace SteamNewBackend.Controllers
             }
             catch
             {
-                return NotFound("Database couldn't be reached.");
+                return NotFound();
             }
         }
 

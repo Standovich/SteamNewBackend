@@ -80,3 +80,10 @@ E:\Repos\SteamNewBackend\SteamNewBackend\obj\Debug\net6.0\refint\SteamNewBackend
 E:\Repos\SteamNewBackend\SteamNewBackend\obj\Debug\net6.0\SteamNewBackend.pdb
 E:\Repos\SteamNewBackend\SteamNewBackend\obj\Debug\net6.0\SteamNewBackend.genruntimeconfig.cache
 E:\Repos\SteamNewBackend\SteamNewBackend\obj\Debug\net6.0\ref\SteamNewBackend.dll
+E:\Repos\SteamNewBackend\SteamNewBackend\bin\Debug\net6.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+E:\Repos\SteamNewBackend\SteamNewBackend\bin\Debug\net6.0\Microsoft.IdentityModel.JsonWebTokens.dll
+E:\Repos\SteamNewBackend\SteamNewBackend\bin\Debug\net6.0\Microsoft.IdentityModel.Logging.dll
+E:\Repos\SteamNewBackend\SteamNewBackend\bin\Debug\net6.0\Microsoft.IdentityModel.Protocols.dll
+E:\Repos\SteamNewBackend\SteamNewBackend\bin\Debug\net6.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+E:\Repos\SteamNewBackend\SteamNewBackend\bin\Debug\net6.0\Microsoft.IdentityModel.Tokens.dll
+E:\Repos\SteamNewBackend\SteamNewBackend\bin\Debug\net6.0\System.IdentityModel.Tokens.Jwt.dll
