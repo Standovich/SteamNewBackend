@@ -4,6 +4,7 @@ using SteamNewBackend.Database;
 using SteamNewBackend.Models.RequestClasses;
 using SteamNewBackend.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
 
 namespace SteamNewBackend.Controllers
 {
@@ -21,7 +22,7 @@ namespace SteamNewBackend.Controllers
         }
 
         [HttpPost("addGame")]
-        public IActionResult AddGame([FromForm] FormGameRequest game)
+        public IActionResult AddGame([FromForm] NewGameRequest game)
         {
             try
             {
@@ -72,7 +73,46 @@ namespace SteamNewBackend.Controllers
                 var games = _mariaDb.Games.ToList();
 
                 if (games != null) return Ok(games);
-                else return NotFound();
+                else return BadRequest(new
+                {
+                    Message = "There are no games."
+                });
+            }
+            catch
+            {
+                return NotFound();
+            }
+        }
+
+        [HttpGet("getGamesByDev/{id}")]
+        public IActionResult GetGamesByDev([FromRoute] int id)
+        {
+            try
+            {
+                var games = _mariaDb.Games.Where(g => g.DevTeam_Id == id).ToList();
+
+                if (games != null) return Ok(games);
+                else return BadRequest(new
+                {
+                    Message = "There are no games."
+                });
+            }
+            catch
+            {
+                return NotFound();
+            }
+        }
+
+        [HttpGet("getOwned/{id}")]
+        public IActionResult GetOwnedGames([FromRoute] int id)
+        {
+            try
+            {
+                var games = _mariaDb.UserGames.Include(x => x.Game)
+                    .Where(ug => ug.User_Id == id).Select(x => x.Game).ToList();
+
+                if (games != null) return NotFound();
+                else return Ok(games);
             }
             catch
             {
@@ -101,7 +141,7 @@ namespace SteamNewBackend.Controllers
         }
 
         [HttpPut("updateGame")]
-        public IActionResult UpdateGame([FromForm] Game newGame)
+        public IActionResult UpdateGame([FromForm] UpdateGameRequest newGame)
         {
             try
             {

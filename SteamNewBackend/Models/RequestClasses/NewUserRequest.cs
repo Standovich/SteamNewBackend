@@ -1,6 +1,6 @@
 ﻿namespace SteamNewBackend.Models.DbRequestClasses
 {
-    public class FormUserRequest
+    public class NewUserRequest
     {
         public string? Username { get; set; }
         public string? Password { get; set; }

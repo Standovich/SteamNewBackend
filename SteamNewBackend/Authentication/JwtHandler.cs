@@ -15,7 +15,8 @@ namespace SteamNewBackend.Authentication
             var identity = new ClaimsIdentity(new Claim[]
             {
                 new Claim(ClaimTypes.Role, user.Role.ToString()),
-                new Claim(ClaimTypes.Name, user.User_Name)
+                new Claim(ClaimTypes.Name, user.User_Name),
+                new Claim(ClaimTypes.NameIdentifier, user.DevTeam_Id.ToString())
             });
 
             var credentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256);

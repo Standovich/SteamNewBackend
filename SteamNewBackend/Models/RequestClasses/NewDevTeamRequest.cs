@@ -1,6 +1,6 @@
 ﻿namespace SteamNewBackend.Models.RequestClasses
 {
-    public class FormDevTeamRequest
+    public class NewDevTeamRequest
     {
         public string? Name { get; set; }
     }

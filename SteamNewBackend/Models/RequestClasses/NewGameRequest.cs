@@ -1,6 +1,6 @@
 ﻿namespace SteamNewBackend.Models.RequestClasses
 {
-    public class FormGameRequest
+    public class NewGameRequest
     {
         public string? Name { get; set; }
         public DateTime ReleaseDate { get; set; }

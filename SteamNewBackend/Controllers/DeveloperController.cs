@@ -20,7 +20,7 @@ namespace SteamNewBackend.Controllers
         }
 
         [HttpPost("addDeveloper")]
-        public IActionResult AddDeveloper([FromForm] FormDevTeamRequest dev)
+        public IActionResult AddDeveloper([FromForm] NewDevTeamRequest dev)
         {
             try
             {

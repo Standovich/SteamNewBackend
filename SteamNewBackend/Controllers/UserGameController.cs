@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SteamNewBackend.Database;
 using SteamNewBackend.Models;
 using SteamNewBackend.Models.RequestClasses;
@@ -6,6 +8,7 @@ using SteamNewBackend.Models.RequestClasses;
 namespace SteamNewBackend.Controllers
 {
     [ApiController]
+    [Authorize]
     [Route("api/[controller]")]
     public class UserGameController : ControllerBase
     {
@@ -18,7 +21,7 @@ namespace SteamNewBackend.Controllers
         }
 
         [HttpPost("purchase")]
-        public IActionResult Purchase([FromBody] PurchaseRequest purchase)
+        public IActionResult Purchase([FromForm] PurchaseRequest purchase)
         {
             try
             {

@@ -2,9 +2,10 @@
 
 namespace SteamNewBackend.Models.RequestClasses
 {
-    public class FormPostRequest
+    public class NewPostRequest
     {
         public string? Title { get; set; }
         public string? Content { get; set; }
+        public int GameId { get; set; }
     }
 }

@@ -4,6 +4,7 @@ using SteamNewBackend.Authentication;
 using SteamNewBackend.Database;
 using SteamNewBackend.Models;
 using SteamNewBackend.Models.DbRequestClasses;
+using SteamNewBackend.Models.RequestClasses;
 
 namespace SteamNewBackend.Controllers
 {
@@ -20,7 +21,7 @@ namespace SteamNewBackend.Controllers
         }
 
         [HttpPost("addUser")]
-        public IActionResult AddUser([FromForm] FormUserRequest user)
+        public IActionResult AddUser([FromForm] NewUserRequest user)
         {
             try
             {
@@ -48,12 +49,15 @@ namespace SteamNewBackend.Controllers
             }
             catch
             {
-                return NotFound();
+                return NotFound(new
+                {
+                    Message = "Something went wrong!"
+                });
             }
         }
 
         [HttpPost("login")]
-        public IActionResult Login([FromForm] FormUserRequest request)
+        public IActionResult Login([FromForm] NewUserRequest request)
         {
             try
             {
@@ -89,15 +93,37 @@ namespace SteamNewBackend.Controllers
         }
 
         [Authorize]
-        [HttpGet("getUser/{id}")]
-        public IActionResult GetUser(int id)
+        [HttpGet("getUserById/{id}")]
+        public IActionResult GetUserById(int id)
         {
             try
             {
                 var user = _mariaDb.Users.FirstOrDefault(u => u.Id == id);
 
                 if (user != null) return Ok(user);
-                else return NotFound();
+                else return BadRequest(new
+                {
+                    Message = "User doesn't exist!"
+                });
+            }
+            catch
+            {
+                return NotFound();
+            }
+        }
+
+        [Authorize]
+        [HttpGet("getUserByName/{username}")]
+        public IActionResult GetUserByName(string username)
+        {
+            try
+            {
+                var user = _mariaDb.Users.FirstOrDefault(u => u.User_Name == username);
+                if (user != null) return Ok(user);
+                else return BadRequest(new
+                {
+                    Message = "User doesn't exist!"
+                });
             }
             catch
             {
@@ -114,7 +140,7 @@ namespace SteamNewBackend.Controllers
                 var users = _mariaDb.Users.ToList();
 
                 if (users != null) return Ok(users);
-                else return NotFound();
+                else return BadRequest();
             }
             catch
             {
@@ -145,7 +171,7 @@ namespace SteamNewBackend.Controllers
 
         [Authorize]
         [HttpPut("updateUser")]
-        public IActionResult UpdateUser([FromForm] User newUser)
+        public IActionResult UpdateUser([FromForm] UpdateUserRequest newUser)
         {
             try
             {
@@ -153,17 +179,23 @@ namespace SteamNewBackend.Controllers
                 if (user != null)
                 {
                     user.User_Name = newUser.User_Name;
-                    user.User_Password = newUser.User_Password;
+                    user.User_Password = PasswordHasher.HashPassword(newUser.User_Password);
                     user.Role = newUser.Role;
                     user.DevTeam_Id = newUser.DevTeam_Id;
                     _mariaDb.SaveChanges();
                     return Ok(newUser);
                 }
-                else return NotFound();
+                else return BadRequest(new
+                {
+                    Message = "Something went wrong"
+                });
             }
             catch
             {
-                return NotFound();
+                return NotFound(new
+                {
+                    Message = "spatne"
+                });
             }
         }
     }

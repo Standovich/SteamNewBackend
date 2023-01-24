@@ -20,23 +20,26 @@ namespace SteamNewBackend.Controllers
         }
 
         [HttpPost("addPost")]
-        public IActionResult AddPost([FromForm] FormPostRequest post)
+        public IActionResult AddPost([FromForm] NewPostRequest post)
         {
             try
             {
                 Post newPost = new()
                 {
                     Post_Title = post.Title,
-                    Post_Content = post.Content
+                    Post_Content = post.Content,
+                    Game_Id = post.GameId
                 };
 
-                if (_mariaDb.Posts.Where(p => p.Post_Title == newPost.Post_Title).Any())
-                    return BadRequest();
-                else
+                if(_mariaDb.Posts.Where(p => p.Post_Title == post.Title).Any())
                 {
                     _mariaDb.Posts.Add(newPost);
                     _mariaDb.SaveChanges();
                     return Ok(post);
+                }
+                else
+                {
+                    return BadRequest();
                 }
             }
             catch
@@ -68,7 +71,29 @@ namespace SteamNewBackend.Controllers
                 var posts = _mariaDb.Posts.ToList();
 
                 if (posts != null) return Ok(posts);
-                else return NotFound();
+                else return BadRequest(new
+                {
+                    Message = "No posts."
+                });
+            }
+            catch
+            {
+                return NotFound();
+            }
+        }
+
+        [HttpGet("getPostsByGame/{id}")]
+        public IActionResult GetPostsByGame([FromRoute] int id)
+        {
+            try
+            {
+                var posts = _mariaDb.Posts.Where(p => p.Game_Id == id);
+
+                if (posts != null) return Ok(posts);
+                else return BadRequest(new
+                {
+                    Message = "No posts."
+                });
             }
             catch
             {
@@ -97,7 +122,7 @@ namespace SteamNewBackend.Controllers
         }
 
         [HttpPut("updatePost")]
-        public IActionResult UpdatePost([FromForm] Post newPost)
+        public IActionResult UpdatePost([FromForm] UpdatePostRequest newPost)
         {
             try
             {
