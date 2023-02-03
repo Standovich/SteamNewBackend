@@ -1,9 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using SteamNewBackend.Database;
 using SteamNewBackend.Models;
-using SteamNewBackend.Models.RequestClasses;
+using SteamNewBackend.Models.Dto;
 
 namespace SteamNewBackend.Controllers
 {
@@ -21,19 +20,22 @@ namespace SteamNewBackend.Controllers
         }
 
         [HttpPost("purchase")]
-        public IActionResult Purchase([FromForm] PurchaseRequest purchase)
+        public IActionResult Purchase([FromForm] Purchase purchase)
         {
             try
             {
                 UserGame userGame = new()
                 {
-                    Game_Id = purchase.GameId,
-                    User_Id = purchase.UserId
+                    GameId = purchase.GameId,
+                    UserId = purchase.UserId
                 };
 
-                if (_mariaDb.UserGames.Where(ug => ug.Game_Id == purchase.GameId
-                && ug.User_Id == purchase.UserId).Any())
-                    return BadRequest();
+                if (_mariaDb.UserGames.Where(ug => ug.GameId == purchase.GameId
+                && ug.UserId == purchase.UserId).Any())
+                    return BadRequest(new
+                    {
+                        Message = "User already owns this game!"
+                    });
                 else
                 {
                     _mariaDb.UserGames.Add(userGame);

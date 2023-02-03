@@ -11,8 +11,8 @@ namespace SteamNewBackend.Database
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<UserGame>().HasOne(ug => ug.User).WithMany(u => u.UserGames).HasForeignKey(ug => ug.User_Id);
-            modelBuilder.Entity<UserGame>().HasOne(ug => ug.Game).WithMany(g => g.UserGames).HasForeignKey(ug => ug.Game_Id);
+            modelBuilder.Entity<UserGame>().HasOne(ug => ug.User).WithMany(u => u.UserGames).HasForeignKey(ug => ug.UserId);
+            modelBuilder.Entity<UserGame>().HasOne(ug => ug.Game).WithMany(g => g.UserGames).HasForeignKey(ug => ug.GameId);
 
             //one Game to many Posts relation
             modelBuilder.Entity<Post>().HasOne(p => p.Game)

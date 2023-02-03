@@ -2,12 +2,11 @@
 using Microsoft.AspNetCore.Mvc;
 using SteamNewBackend.Database;
 using SteamNewBackend.Models;
-using SteamNewBackend.Models.RequestClasses;
+using SteamNewBackend.Models.Dto;
 
 namespace SteamNewBackend.Controllers
 {
     [ApiController]
-    [Authorize]
     [Route("api/[controller]")]
     public class DeveloperController : ControllerBase
     {
@@ -19,8 +18,9 @@ namespace SteamNewBackend.Controllers
             _mariaDb = context;
         }
 
+        [Authorize]
         [HttpPost("addDeveloper")]
-        public IActionResult AddDeveloper([FromForm] NewDevTeamRequest dev)
+        public IActionResult AddDeveloper([FromForm] NewDevTeam dev)
         {
             try
             {
@@ -76,6 +76,7 @@ namespace SteamNewBackend.Controllers
             }
         }
 
+        [Authorize]
         [HttpDelete("deleteDeveloper/{id}")]
         public IActionResult DeleteDeveloper([FromRoute] int id)
         {
@@ -96,6 +97,7 @@ namespace SteamNewBackend.Controllers
             }
         }
 
+        [Authorize]
         [HttpPut("updateDeveloper")]
         public IActionResult UpdateDeveloper([FromForm] DevTeam newDev)
         {

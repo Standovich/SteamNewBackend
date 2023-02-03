@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using SteamNewBackend.Database;
 using SteamNewBackend.Models;
-using SteamNewBackend.Models.RequestClasses;
+using SteamNewBackend.Models.Dto;
 
 namespace SteamNewBackend.Controllers
 {
@@ -20,7 +20,7 @@ namespace SteamNewBackend.Controllers
         }
 
         [HttpPost("addPost")]
-        public IActionResult AddPost([FromForm] NewPostRequest post)
+        public IActionResult AddPost([FromForm] NewPost post)
         {
             try
             {
@@ -122,7 +122,7 @@ namespace SteamNewBackend.Controllers
         }
 
         [HttpPut("updatePost")]
-        public IActionResult UpdatePost([FromForm] UpdatePostRequest newPost)
+        public IActionResult UpdatePost([FromForm] UpdatePost newPost)
         {
             try
             {

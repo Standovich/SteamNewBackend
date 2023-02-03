@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace SteamNewBackend.Models.RequestClasses
+namespace SteamNewBackend.Models.Dto
 {
-    public class NewPostRequest
+    public class NewPost
     {
         public string? Title { get; set; }
         public string? Content { get; set; }

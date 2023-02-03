@@ -3,8 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using SteamNewBackend.Authentication;
 using SteamNewBackend.Database;
 using SteamNewBackend.Models;
-using SteamNewBackend.Models.DbRequestClasses;
-using SteamNewBackend.Models.RequestClasses;
+using SteamNewBackend.Models.Dto;
 
 namespace SteamNewBackend.Controllers
 {
@@ -21,7 +20,7 @@ namespace SteamNewBackend.Controllers
         }
 
         [HttpPost("addUser")]
-        public IActionResult AddUser([FromForm] NewUserRequest user)
+        public IActionResult AddUser([FromForm] NewUser user)
         {
             try
             {
@@ -44,7 +43,10 @@ namespace SteamNewBackend.Controllers
                 {
                     _mariaDb.Users.Add(newUser);
                     _mariaDb.SaveChanges();
-                    return Ok(user);
+                    return Ok(new
+                    {
+                        Message = "You have successfully signed up!"
+                    });
                 }
             }
             catch
@@ -57,7 +59,7 @@ namespace SteamNewBackend.Controllers
         }
 
         [HttpPost("login")]
-        public IActionResult Login([FromForm] NewUserRequest request)
+        public IActionResult Login([FromForm] LoginUser request)
         {
             try
             {
@@ -78,7 +80,7 @@ namespace SteamNewBackend.Controllers
                     });
 
                 }
-                else return BadRequest(new
+                else return NotFound(new
                 {
                     Message = "User not found!"
                 });
@@ -171,21 +173,33 @@ namespace SteamNewBackend.Controllers
 
         [Authorize]
         [HttpPut("updateUser")]
-        public IActionResult UpdateUser([FromForm] UpdateUserRequest newUser)
+        public IActionResult UpdateUser([FromForm] UpdateUser newUser)
         {
             try
             {
                 var user = _mariaDb.Users.FirstOrDefault(u => u.Id == newUser.Id);
                 if (user != null)
                 {
-                    user.User_Name = newUser.User_Name;
-                    user.User_Password = PasswordHasher.HashPassword(newUser.User_Password);
-                    user.Role = newUser.Role;
-                    user.DevTeam_Id = newUser.DevTeam_Id;
-                    _mariaDb.SaveChanges();
-                    return Ok(newUser);
+                    if (PasswordHasher.VerifyPassword(newUser.User_OldPassword, user.User_Password))
+                    {
+                        user.User_Name = newUser.User_Name;
+                        user.User_Password = PasswordHasher.HashPassword(newUser.User_NewPassword);
+                        user.Role = newUser.Role;
+                        user.DevTeam_Id = newUser.DevTeam_Id;
+                        user.Token = JwtHandler.CreateJwt(user);
+                        _mariaDb.SaveChanges();
+                        return Ok(new
+                        {
+                            Message = "User credentials successfully changed!",
+                            Token = user.Token
+                        });
+                    }
+                    else return BadRequest(new
+                    {
+                        Message = "Bad password!"
+                    });
                 }
-                else return BadRequest(new
+                else return NotFound(new
                 {
                     Message = "Something went wrong"
                 });

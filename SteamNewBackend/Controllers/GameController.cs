@@ -1,7 +1,6 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using SteamNewBackend.Database;
-using SteamNewBackend.Models.RequestClasses;
+using SteamNewBackend.Models.Dto;
 using SteamNewBackend.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -22,7 +21,7 @@ namespace SteamNewBackend.Controllers
         }
 
         [HttpPost("addGame")]
-        public IActionResult AddGame([FromForm] NewGameRequest game)
+        public IActionResult AddGame([FromForm] NewGame game)
         {
             try
             {
@@ -103,15 +102,20 @@ namespace SteamNewBackend.Controllers
             }
         }
 
-        [HttpGet("getOwned/{id}")]
-        public IActionResult GetOwnedGames([FromRoute] int id)
+        [HttpGet("getOwned/{username}")]
+        public IActionResult GetOwnedGames([FromRoute] string username)
         {
             try
             {
-                var games = _mariaDb.UserGames.Include(x => x.Game)
-                    .Where(ug => ug.User_Id == id).Select(x => x.Game).ToList();
+                var id = _mariaDb.Users.FirstOrDefault(u => u.User_Name == username).Id;
 
-                if (games != null) return NotFound();
+                var games = _mariaDb.UserGames.Include(g => g.Game)
+                    .Where(u => u.UserId == id).Select(g => g.Game).ToArray();
+
+                if (games != null) return NotFound(new
+                {
+                    Message = "User owns no games!"
+                });
                 else return Ok(games);
             }
             catch
@@ -141,7 +145,7 @@ namespace SteamNewBackend.Controllers
         }
 
         [HttpPut("updateGame")]
-        public IActionResult UpdateGame([FromForm] UpdateGameRequest newGame)
+        public IActionResult UpdateGame([FromForm] UpdateGame newGame)
         {
             try
             {
