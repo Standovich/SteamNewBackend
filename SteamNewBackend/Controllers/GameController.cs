@@ -40,7 +40,10 @@ namespace SteamNewBackend.Controllers
                 {
                     _mariaDb.Games.Add(newGame);
                     _mariaDb.SaveChanges();
-                    return Ok(game);
+                    return Ok(new
+                    {
+                        Message = "Game successfully created!"
+                    });
                 }
             }
             catch
@@ -107,16 +110,15 @@ namespace SteamNewBackend.Controllers
         {
             try
             {
-                var id = _mariaDb.Users.FirstOrDefault(u => u.User_Name == username).Id;
-
+                var user = _mariaDb.Users.FirstOrDefault(u => u.User_Name == username);
                 var games = _mariaDb.UserGames.Include(g => g.Game)
-                    .Where(u => u.UserId == id).Select(g => g.Game).ToArray();
+                    .Where(u => u.UserId == user.Id).Select(g => g.Game).ToArray();
 
-                if (games != null) return NotFound(new
+                if (games != null) return Ok(games);
+                else return NotFound(new
                 {
                     Message = "User owns no games!"
                 });
-                else return Ok(games);
             }
             catch
             {
@@ -134,7 +136,10 @@ namespace SteamNewBackend.Controllers
                 {
                     _mariaDb.Games.Remove(game);
                     _mariaDb.SaveChanges();
-                    return Ok(game);
+                    return Ok(new
+                    {
+                        Message = "Game successfully deleted!"
+                    });
                 }
                 else return NotFound();
             }
@@ -158,7 +163,10 @@ namespace SteamNewBackend.Controllers
                     game.Game_Price = newGame.Game_Price;
                     game.DevTeam_Id = newGame.DevTeam_Id;
                     _mariaDb.SaveChanges();
-                    return Ok(newGame);
+                    return Ok(new
+                    {
+                        Message = "Game successfully updated!"
+                    });
                 }
                 else return NotFound();
             }

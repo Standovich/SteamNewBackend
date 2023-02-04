@@ -161,7 +161,10 @@ namespace SteamNewBackend.Controllers
                 {
                     _mariaDb.Users.Remove(user);
                     _mariaDb.SaveChanges();
-                    return Ok(user);
+                    return Ok(new
+                    {
+                        Message = "User successfully deleted!"
+                    });
                 }
                 else return NotFound();
             }
@@ -180,10 +183,46 @@ namespace SteamNewBackend.Controllers
                 var user = _mariaDb.Users.FirstOrDefault(u => u.Id == newUser.Id);
                 if (user != null)
                 {
+                    user.User_Name = newUser.User_Name;
+                    if(newUser.User_Password != null)
+                        user.User_Password = PasswordHasher.HashPassword(newUser.User_Password);
+                    user.Role = newUser.Role;
+                    user.DevTeam_Id = newUser.DevTeam_Id;
+                    user.Token = JwtHandler.CreateJwt(user);
+                    _mariaDb.SaveChanges();
+                    return Ok(new
+                    {
+                        Message = "User credentials successfully changed!"
+                    });
+                }
+                else return NotFound(new
+                {
+                    Message = "Something went wrong"
+                });
+            }
+            catch
+            {
+                return NotFound(new
+                {
+                    Message = "spatne"
+                });
+            }
+        }
+
+        [Authorize]
+        [HttpPut("updateUserAuth")]
+        public IActionResult UpdateUser([FromForm] UpdateUserAuth newUser)
+        {
+            try
+            {
+                var user = _mariaDb.Users.FirstOrDefault(u => u.Id == newUser.Id);
+                if (user != null)
+                {
                     if (PasswordHasher.VerifyPassword(newUser.User_OldPassword, user.User_Password))
                     {
                         user.User_Name = newUser.User_Name;
-                        user.User_Password = PasswordHasher.HashPassword(newUser.User_NewPassword);
+                        if(newUser.User_NewPassword != null)
+                            user.User_Password = PasswordHasher.HashPassword(newUser.User_NewPassword);
                         user.Role = newUser.Role;
                         user.DevTeam_Id = newUser.DevTeam_Id;
                         user.Token = JwtHandler.CreateJwt(user);

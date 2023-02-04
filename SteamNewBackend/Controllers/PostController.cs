@@ -24,22 +24,22 @@ namespace SteamNewBackend.Controllers
         {
             try
             {
-                Post newPost = new()
-                {
-                    Post_Title = post.Title,
-                    Post_Content = post.Content,
-                    Game_Id = post.GameId
-                };
-
-                if(_mariaDb.Posts.Where(p => p.Post_Title == post.Title).Any())
-                {
-                    _mariaDb.Posts.Add(newPost);
-                    _mariaDb.SaveChanges();
-                    return Ok(post);
-                }
+                if(post == null) return BadRequest();
                 else
                 {
-                    return BadRequest();
+                    Post newPost = new()
+                    {
+                        Post_Title = post.Title,
+                        Post_Content = post.Content,
+                        Game_Id = post.GameId
+                    };
+
+                    _mariaDb.Posts.Add(newPost);
+                    _mariaDb.SaveChanges();
+                    return Ok(new
+                    {
+                        Message = "Post successfully created!"
+                    });
                 }
             }
             catch
@@ -111,7 +111,10 @@ namespace SteamNewBackend.Controllers
                 {
                     _mariaDb.Posts.Remove(post);
                     _mariaDb.SaveChanges();
-                    return Ok(post);
+                    return Ok(new
+                    {
+                        Message = "Post successfully deleted!"
+                    });
                 }
                 else return NotFound();
             }
@@ -132,7 +135,10 @@ namespace SteamNewBackend.Controllers
                     post.Post_Title = newPost.Post_Title;
                     post.Post_Content = newPost.Post_Content;
                     _mariaDb.SaveChanges();
-                    return Ok(newPost);
+                    return Ok(new
+                    {
+                        Message = "Post successfully updated!"
+                    });
                 }
                 else return NotFound();
             }

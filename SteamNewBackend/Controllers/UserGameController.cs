@@ -40,7 +40,10 @@ namespace SteamNewBackend.Controllers
                 {
                     _mariaDb.UserGames.Add(userGame);
                     _mariaDb.SaveChanges();
-                    return Ok(purchase);
+                    return Ok(new
+                    {
+                        Message = "Your purchase was successful!"
+                    });
                 }
             }
             catch

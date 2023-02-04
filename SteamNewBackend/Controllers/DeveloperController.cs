@@ -35,7 +35,10 @@ namespace SteamNewBackend.Controllers
                 {
                     _mariaDb.DevTeams.Add(newDev);
                     _mariaDb.SaveChanges();
-                    return Ok(dev);
+                    return Ok(new
+                    {
+                        Message = "Developer successfully created!"
+                    });
                 }
             }
             catch
@@ -87,7 +90,10 @@ namespace SteamNewBackend.Controllers
                 {
                     _mariaDb.DevTeams.Remove(dev);
                     _mariaDb.SaveChanges();
-                    return Ok(dev);
+                    return Ok(new
+                    {
+                        Message = "Developer successfully deleted!"
+                    });
                 }
                 else return NotFound();
             }
@@ -108,7 +114,10 @@ namespace SteamNewBackend.Controllers
                 {
                     dev.DevTeam_name = newDev.DevTeam_name;
                     _mariaDb.SaveChanges();
-                    return Ok(newDev);
+                    return Ok(new
+                    {
+                        Message = "Developer successfully updated!"
+                    });
                 }
                 else return NotFound();
             }
