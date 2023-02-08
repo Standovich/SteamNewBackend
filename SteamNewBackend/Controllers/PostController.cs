@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using SteamNewBackend.Database;
 using SteamNewBackend.Models;
 using SteamNewBackend.Models.Dto;
+using SteamNewBackend.Services;
 
 namespace SteamNewBackend.Controllers
 {
@@ -11,36 +12,26 @@ namespace SteamNewBackend.Controllers
     [Route("api/[controller]")]
     public class PostController : ControllerBase
     {
-        private readonly ILogger<MariaDbContext> _logger;
+        private readonly IPostService _postService;
         private readonly MariaDbContext _mariaDb;
-        public PostController(ILogger<MariaDbContext> logger, MariaDbContext context)
+        public PostController(IPostService postService, MariaDbContext context)
         {
-            _logger = logger;
+            _postService = postService;
             _mariaDb = context;
         }
 
         [HttpPost("addPost")]
-        public IActionResult AddPost([FromForm] NewPost post)
+        public async Task<IActionResult> AddPost([FromForm] NewPost newPostData)
         {
             try
             {
-                if(post == null) return BadRequest();
-                else
+                if (newPostData == null) return BadRequest();
+                
+                await _postService.AddPost(newPostData);
+                return Ok(new
                 {
-                    Post newPost = new()
-                    {
-                        Post_Title = post.Title,
-                        Post_Content = post.Content,
-                        Game_Id = post.GameId
-                    };
-
-                    _mariaDb.Posts.Add(newPost);
-                    _mariaDb.SaveChanges();
-                    return Ok(new
-                    {
-                        Message = "Post successfully created!"
-                    });
-                }
+                    Message = "Post successfully created!"
+                });
             }
             catch
             {
@@ -48,14 +39,14 @@ namespace SteamNewBackend.Controllers
             }
         }
 
-        [HttpGet("getPost/{id}")]
-        public IActionResult GetPost([FromRoute] int id)
+        [HttpGet("getPost/{postId}")]
+        public async Task<IActionResult> GetPost([FromRoute] int postId)
         {
             try
             {
-                var post = _mariaDb.Posts.FirstOrDefault(p => p.Id == id);
-                if (post != null) return Ok(post);
-                else return NotFound();
+                var post = await _postService.GetPost(postId);
+                if(post == null) return NotFound();
+                return Ok(post);
             }
             catch
             {
@@ -68,13 +59,9 @@ namespace SteamNewBackend.Controllers
         {
             try
             {
-                var posts = _mariaDb.Posts.ToList();
-
-                if (posts != null) return Ok(posts);
-                else return BadRequest(new
-                {
-                    Message = "No posts."
-                });
+                var posts = _postService.GetAllPosts();
+                if (posts == null) return NotFound();
+                return Ok(posts);
             }
             catch
             {
@@ -82,18 +69,14 @@ namespace SteamNewBackend.Controllers
             }
         }
 
-        [HttpGet("getPostsByGame/{id}")]
-        public IActionResult GetPostsByGame([FromRoute] int id)
+        [HttpGet("getPostsByGame/{gameId}")]
+        public async Task<IActionResult> GetPostsByGame([FromRoute] int gameId)
         {
             try
             {
-                var posts = _mariaDb.Posts.Where(p => p.Game_Id == id);
-
-                if (posts != null) return Ok(posts);
-                else return BadRequest(new
-                {
-                    Message = "No posts."
-                });
+                var posts = await _postService.GetPostsByGame(gameId);
+                if (posts == null) return NotFound();
+                return Ok(posts);
             }
             catch
             {
@@ -101,22 +84,17 @@ namespace SteamNewBackend.Controllers
             }
         }
 
-        [HttpDelete("deletePost/{id}")]
-        public IActionResult DeletePost([FromRoute] int id)
+        [HttpDelete("deletePost/{postId}")]
+        public async Task<IActionResult> DeletePost([FromRoute] int postId)
         {
             try
             {
-                var post = _mariaDb.Posts.FirstOrDefault(p => p.Id == id);
-                if (post != null)
+                var result = await _postService.DeletePost(postId);
+                if(result == 0) return NotFound();
+                return Ok(new
                 {
-                    _mariaDb.Posts.Remove(post);
-                    _mariaDb.SaveChanges();
-                    return Ok(new
-                    {
-                        Message = "Post successfully deleted!"
-                    });
-                }
-                else return NotFound();
+                    Message = "Post successfully deleted!"
+                });
             }
             catch
             {
@@ -125,22 +103,18 @@ namespace SteamNewBackend.Controllers
         }
 
         [HttpPut("updatePost")]
-        public IActionResult UpdatePost([FromForm] UpdatePost newPost)
+        public async Task<IActionResult> UpdatePost([FromForm] UpdatePost updatePostData)
         {
             try
             {
-                var post = _mariaDb.Posts.FirstOrDefault(p => p.Id == newPost.Id);
-                if (post != null)
+                if(updatePostData == null) return NotFound();
+
+                var result = await _postService.UpdatePost(updatePostData);
+                if(result == 0) return NotFound();
+                return Ok(new
                 {
-                    post.Post_Title = newPost.Post_Title;
-                    post.Post_Content = newPost.Post_Content;
-                    _mariaDb.SaveChanges();
-                    return Ok(new
-                    {
-                        Message = "Post successfully updated!"
-                    });
-                }
-                else return NotFound();
+                    Message = "Post successfully updated!"
+                });
             }
             catch
             {

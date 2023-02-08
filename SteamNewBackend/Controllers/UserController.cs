@@ -4,6 +4,7 @@ using SteamNewBackend.Authentication;
 using SteamNewBackend.Database;
 using SteamNewBackend.Models;
 using SteamNewBackend.Models.Dto;
+using SteamNewBackend.Services;
 
 namespace SteamNewBackend.Controllers
 {
@@ -11,102 +12,70 @@ namespace SteamNewBackend.Controllers
     [Route("api/[controller]")]
     public class UserController : ControllerBase
     {
-        private readonly ILogger<MariaDbContext> _logger;
+        private readonly IUserService _userService;
         private readonly MariaDbContext _mariaDb;
-        public UserController(ILogger<MariaDbContext> logger, MariaDbContext context)
+        public UserController(IUserService userService, MariaDbContext context)
         {
-            _logger = logger;
+            _userService = userService;
             _mariaDb = context;
         }
 
         [HttpPost("addUser")]
-        public IActionResult AddUser([FromForm] NewUser user)
+        public async Task<IActionResult> AddUser([FromForm] NewUser newUserData)
         {
             try
             {
-                if (user == null) return BadRequest();
+                if (newUserData == null) return BadRequest();
 
-                User newUser = new()
-                {
-                    User_Name = user.Username,
-                    User_Password = PasswordHasher.HashPassword(user.Password),
-                    Role = user.Role,
-                    DevTeam_Id = user.DevTeam
-                };
+                var result = await _userService.AddUser(newUserData);
 
-                if (_mariaDb.Users.Where(u => u.User_Name == newUser.User_Name).Any())
-                    return BadRequest(new
-                    {
-                        Message = "User already exists!"
-                    });
-                else
+                if(result == 2) return BadRequest(new
                 {
-                    _mariaDb.Users.Add(newUser);
-                    _mariaDb.SaveChanges();
-                    return Ok(new
-                    {
-                        Message = "You have successfully signed up!"
-                    });
-                }
+                    Message = "User already exists!"
+                });
+                return Ok(new
+                {
+                    Message = "You have successfully signed up!"
+                });
             }
             catch
             {
-                return NotFound(new
-                {
-                    Message = "Something went wrong!"
-                });
+                return NotFound();
             }
         }
 
         [HttpPost("login")]
-        public IActionResult Login([FromForm] LoginUser request)
+        public async Task<IActionResult> Login([FromForm] LoginUser loginRequest)
         {
             try
             {
-                var user = _mariaDb.Users.FirstOrDefault(u => u.User_Name == request.Username);
-                if (user != null)
-                {
-                    if (PasswordHasher.VerifyPassword(request.Password, user.User_Password))
-                    {
-                        user.Token = JwtHandler.CreateJwt(user);
-                        return Ok(new
-                        {
-                            Token = user.Token
-                        });
-                    }
-                    else return BadRequest(new
-                    {
-                        Message = "Wrong password!"
-                    });
+                if(loginRequest == null) return BadRequest();
 
-                }
-                else return NotFound(new
+                var result = await _userService.Login(loginRequest);
+                if(result == null) return BadRequest(new
                 {
-                    Message = "User not found!"
+                    Message = "Username or password is wrong!"
+                });
+                return Ok(new
+                {
+                    Token = result
                 });
             }
             catch
             {
-                return NotFound(new
-                {
-                    Message = "Login failed!"
-                });
+                return NotFound();
             }
         }
 
         [Authorize]
-        [HttpGet("getUserById/{id}")]
-        public IActionResult GetUserById(int id)
+        [HttpGet("getUserById/{userId}")]
+        public async Task<IActionResult> GetUserById(int userId)
         {
             try
             {
-                var user = _mariaDb.Users.FirstOrDefault(u => u.Id == id);
-
-                if (user != null) return Ok(user);
-                else return BadRequest(new
-                {
-                    Message = "User doesn't exist!"
-                });
+                var user = await _userService.GetUserById(userId);
+                if(user == null) return NotFound();
+                return Ok(user);
             }
             catch
             {
@@ -116,16 +85,13 @@ namespace SteamNewBackend.Controllers
 
         [Authorize]
         [HttpGet("getUserByName/{username}")]
-        public IActionResult GetUserByName(string username)
+        public async Task<IActionResult> GetUserByName(string username)
         {
             try
             {
-                var user = _mariaDb.Users.FirstOrDefault(u => u.User_Name == username);
-                if (user != null) return Ok(user);
-                else return BadRequest(new
-                {
-                    Message = "User doesn't exist!"
-                });
+                var user = await _userService.GetUserByName(username);
+                if(user == null) return NotFound();
+                return Ok(user);
             }
             catch
             {
@@ -135,14 +101,13 @@ namespace SteamNewBackend.Controllers
 
         [Authorize]
         [HttpGet("getUsers")]
-        public IActionResult GetUsers()
+        public async Task<IActionResult> GetUsers()
         {
             try
             {
-                var users = _mariaDb.Users.ToList();
-
-                if (users != null) return Ok(users);
-                else return BadRequest();
+                var users = await _userService.GetAllUsers();
+                if (users == null) return NotFound();
+                return Ok(users);
             }
             catch
             {
@@ -151,22 +116,14 @@ namespace SteamNewBackend.Controllers
         }
 
         [Authorize]
-        [HttpDelete("deleteUser/{id}")]
-        public IActionResult DeleteUser([FromRoute] int id)
+        [HttpDelete("deleteUser/{userId}")]
+        public async Task<IActionResult> DeleteUser([FromRoute] int userId)
         {
             try
             {
-                var user = _mariaDb.Users.FirstOrDefault(u => u.Id == id);
-                if (user != null)
-                {
-                    _mariaDb.Users.Remove(user);
-                    _mariaDb.SaveChanges();
-                    return Ok(new
-                    {
-                        Message = "User successfully deleted!"
-                    });
-                }
-                else return NotFound();
+                var result = await _userService.DeleteUser(userId);
+                if(result == 0) return NotFound();
+                return Ok(result);
             }
             catch
             {
@@ -176,79 +133,44 @@ namespace SteamNewBackend.Controllers
 
         [Authorize]
         [HttpPut("updateUser")]
-        public IActionResult UpdateUser([FromForm] UpdateUser newUser)
+        public async Task<IActionResult> UpdateUser([FromForm] UpdateUser updateUserData)
         {
             try
             {
-                var user = _mariaDb.Users.FirstOrDefault(u => u.Id == newUser.Id);
-                if (user != null)
+                if(updateUserData == null) return BadRequest();
+
+                var result = await _userService.UpdateUser(updateUserData);
+                if(result == 0) return NotFound();
+                return Ok(new
                 {
-                    user.User_Name = newUser.User_Name;
-                    if(newUser.User_Password != null)
-                        user.User_Password = PasswordHasher.HashPassword(newUser.User_Password);
-                    user.Role = newUser.Role;
-                    user.DevTeam_Id = newUser.DevTeam_Id;
-                    user.Token = JwtHandler.CreateJwt(user);
-                    _mariaDb.SaveChanges();
-                    return Ok(new
-                    {
-                        Message = "User credentials successfully changed!"
-                    });
-                }
-                else return NotFound(new
-                {
-                    Message = "Something went wrong"
+                    Message = "User credentials successfully changed!"
                 });
             }
             catch
             {
-                return NotFound(new
-                {
-                    Message = "spatne"
-                });
+                return NotFound();
             }
         }
 
         [Authorize]
         [HttpPut("updateUserAuth")]
-        public IActionResult UpdateUser([FromForm] UpdateUserAuth newUser)
+        public async Task<IActionResult> UpdateUser([FromForm] UpdateUserAuth updateUserData)
         {
             try
             {
-                var user = _mariaDb.Users.FirstOrDefault(u => u.Id == newUser.Id);
-                if (user != null)
+                if (updateUserData == null) return BadRequest();
+
+                var result = await _userService.UpdateUserAuthorized(updateUserData);
+                if(result == null) return NotFound();
+                return Ok(new
                 {
-                    if (PasswordHasher.VerifyPassword(newUser.User_OldPassword, user.User_Password))
-                    {
-                        user.User_Name = newUser.User_Name;
-                        if(newUser.User_NewPassword != null)
-                            user.User_Password = PasswordHasher.HashPassword(newUser.User_NewPassword);
-                        user.Role = newUser.Role;
-                        user.DevTeam_Id = newUser.DevTeam_Id;
-                        user.Token = JwtHandler.CreateJwt(user);
-                        _mariaDb.SaveChanges();
-                        return Ok(new
-                        {
-                            Message = "User credentials successfully changed!",
-                            Token = user.Token
-                        });
-                    }
-                    else return BadRequest(new
-                    {
-                        Message = "Bad password!"
-                    });
-                }
-                else return NotFound(new
-                {
-                    Message = "Something went wrong"
+                    Message = "User credentials successfully changed!",
+                    Token = result
                 });
             }
             catch
             {
-                return NotFound(new
-                {
-                    Message = "spatne"
-                });
+                return NotFound();
             }
         }
     }

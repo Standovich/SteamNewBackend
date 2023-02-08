@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using SteamNewBackend.Database;
 using SteamNewBackend.Models;
 using SteamNewBackend.Models.Dto;
+using SteamNewBackend.Services;
 
 namespace SteamNewBackend.Controllers
 {
@@ -11,40 +12,30 @@ namespace SteamNewBackend.Controllers
     [Route("api/[controller]")]
     public class UserGameController : ControllerBase
     {
-        private readonly ILogger<MariaDbContext> _logger;
+        private readonly IUserGameService _userGameSerivce;
         private readonly MariaDbContext _mariaDb;
-        public UserGameController(ILogger<MariaDbContext> logger, MariaDbContext context)
+        public UserGameController(IUserGameService userGameService, MariaDbContext context)
         {
-            _logger = logger;
+            _userGameSerivce = userGameService;
             _mariaDb = context;
         }
 
         [HttpPost("purchase")]
-        public IActionResult Purchase([FromForm] Purchase purchase)
+        public async Task<IActionResult> Purchase([FromForm] Purchase purchase)
         {
             try
             {
-                UserGame userGame = new()
-                {
-                    GameId = purchase.GameId,
-                    UserId = purchase.UserId
-                };
+                if (purchase == null) return BadRequest();
 
-                if (_mariaDb.UserGames.Where(ug => ug.GameId == purchase.GameId
-                && ug.UserId == purchase.UserId).Any())
-                    return BadRequest(new
-                    {
-                        Message = "User already owns this game!"
-                    });
-                else
+                var result = await _userGameSerivce.Purchase(purchase);
+                if (result == 2) return BadRequest(new
                 {
-                    _mariaDb.UserGames.Add(userGame);
-                    _mariaDb.SaveChanges();
-                    return Ok(new
-                    {
-                        Message = "Your purchase was successful!"
-                    });
-                }
+                    Message = "You already own this game!"
+                });
+                return Ok(new
+                {
+                    Message = "Your purchase was successful!"
+                });
             }
             catch
             {

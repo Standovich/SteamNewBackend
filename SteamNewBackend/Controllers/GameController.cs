@@ -4,6 +4,7 @@ using SteamNewBackend.Models.Dto;
 using SteamNewBackend.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using SteamNewBackend.Services;
 
 namespace SteamNewBackend.Controllers
 {
@@ -12,39 +13,27 @@ namespace SteamNewBackend.Controllers
     [Route("api/[controller]")]
     public class GameController : ControllerBase
     {
-        private readonly ILogger<MariaDbContext> _logger;
+        private readonly IGameService _gameService;
         private readonly MariaDbContext _mariaDb;
-        public GameController(ILogger<MariaDbContext> logger, MariaDbContext context)
+        public GameController(IGameService gameService, MariaDbContext context)
         {
-            _logger = logger;
+            _gameService = gameService;
             _mariaDb = context;
         }
 
         [HttpPost("addGame")]
-        public IActionResult AddGame([FromForm] NewGame game)
+        public async Task<IActionResult> AddGame([FromForm] NewGame newGameData)
         {
             try
             {
-                Game newGame = new()
-                {
-                    Game_Name = game.Name,
-                    Game_RelDate = game.ReleaseDate,
-                    Game_Description = game.Description,
-                    Game_Price = game.Price,
-                    DevTeam_Id = game.DevTeamId
-                };
+                if (newGameData == null) return BadRequest();
 
-                if (_mariaDb.Games.Where(g => g.Game_Name == newGame.Game_Name).Any())
-                    return BadRequest();
-                else
+                var result = await _gameService.AddGame(newGameData);
+                if(result == 2) return BadRequest();
+                return Ok(new
                 {
-                    _mariaDb.Games.Add(newGame);
-                    _mariaDb.SaveChanges();
-                    return Ok(new
-                    {
-                        Message = "Game successfully created!"
-                    });
-                }
+                    Message = "Game successfully created!"
+                });
             }
             catch
             {
@@ -52,14 +41,14 @@ namespace SteamNewBackend.Controllers
             }
         }
 
-        [HttpGet("getGame/{id}")]
-        public IActionResult GetGame([FromRoute] int id)
+        [HttpGet("getGame/{gameId}")]
+        public async Task<IActionResult> GetGame([FromRoute] int gameId)
         {
             try
             {
-                var game = _mariaDb.Games.FirstOrDefault(g => g.Id == id);
-                if (game != null) return Ok(game);
-                else return NotFound();
+                var game = await _gameService.GetGame(gameId);
+                if(game == null) return NotFound();
+                return Ok(game);
             }
             catch
             {
@@ -68,17 +57,13 @@ namespace SteamNewBackend.Controllers
         }
 
         [HttpGet("getGames")]
-        public IActionResult GetGames()
+        public async Task<IActionResult> GetGames()
         {
             try
             {
-                var games = _mariaDb.Games.ToList();
-
-                if (games != null) return Ok(games);
-                else return BadRequest(new
-                {
-                    Message = "There are no games."
-                });
+                var games = await _gameService.GetAllGames();
+                if(games == null) return NotFound();
+                return Ok(games);
             }
             catch
             {
@@ -86,18 +71,14 @@ namespace SteamNewBackend.Controllers
             }
         }
 
-        [HttpGet("getGamesByDev/{id}")]
-        public IActionResult GetGamesByDev([FromRoute] int id)
+        [HttpGet("getGamesByDev/{developerId}")]
+        public async Task<IActionResult> GetGamesByDev([FromRoute] int developerId)
         {
             try
             {
-                var games = _mariaDb.Games.Where(g => g.DevTeam_Id == id).ToList();
-
-                if (games != null) return Ok(games);
-                else return BadRequest(new
-                {
-                    Message = "There are no games."
-                });
+                var games = await _gameService.GetGamesByDev(developerId);
+                if(games == null) return NotFound();
+                return Ok(games);
             }
             catch
             {
@@ -106,18 +87,30 @@ namespace SteamNewBackend.Controllers
         }
 
         [HttpGet("getOwned/{username}")]
-        public IActionResult GetOwnedGames([FromRoute] string username)
+        public async Task<IActionResult> GetOwnedGames([FromRoute] string username)
         {
             try
             {
-                var user = _mariaDb.Users.FirstOrDefault(u => u.User_Name == username);
-                var games = _mariaDb.UserGames.Include(g => g.Game)
-                    .Where(u => u.UserId == user.Id).Select(g => g.Game).ToArray();
+                var games = await _gameService.GetOwnedGames(username);
+                if(games == null) return NotFound();
+                return Ok(games);
+            }
+            catch
+            {
+                return NotFound();
+            }
+        }
 
-                if (games != null) return Ok(games);
-                else return NotFound(new
+        [HttpDelete("deleteGame/{gameId}")]
+        public async Task<IActionResult> DeleteGame([FromRoute] int gameId)
+        {
+            try
+            {
+                var result = await _gameService.DeleteGame(gameId);
+                if(result == 0) return NotFound();
+                return Ok(new
                 {
-                    Message = "User owns no games!"
+                    Message = "Game successfully deleted!"
                 });
             }
             catch
@@ -126,49 +119,19 @@ namespace SteamNewBackend.Controllers
             }
         }
 
-        [HttpDelete("deleteGame/{id}")]
-        public IActionResult DeleteGame([FromRoute] int id)
-        {
-            try
-            {
-                var game = _mariaDb.Games.FirstOrDefault(g => g.Id == id);
-                if (game != null)
-                {
-                    _mariaDb.Games.Remove(game);
-                    _mariaDb.SaveChanges();
-                    return Ok(new
-                    {
-                        Message = "Game successfully deleted!"
-                    });
-                }
-                else return NotFound();
-            }
-            catch
-            {
-                return NotFound();
-            }
-        }
-
         [HttpPut("updateGame")]
-        public IActionResult UpdateGame([FromForm] UpdateGame newGame)
+        public async Task<IActionResult> UpdateGame([FromForm] UpdateGame updateGameData)
         {
             try
             {
-                var game = _mariaDb.Games.FirstOrDefault(g => g.Id == newGame.Id);
-                if (game != null)
+                if(updateGameData == null) return NotFound();
+
+                var result = await _gameService.UpdateGame(updateGameData);
+                if (result == 0) return NotFound();
+                return Ok(new
                 {
-                    game.Game_Name = newGame.Game_Name;
-                    game.Game_RelDate = newGame.Game_RelDate;
-                    game.Game_Description = newGame.Game_Description;
-                    game.Game_Price = newGame.Game_Price;
-                    game.DevTeam_Id = newGame.DevTeam_Id;
-                    _mariaDb.SaveChanges();
-                    return Ok(new
-                    {
-                        Message = "Game successfully updated!"
-                    });
-                }
-                else return NotFound();
+                    Message = "Game successfully updated!"
+                });
             }
             catch
             {

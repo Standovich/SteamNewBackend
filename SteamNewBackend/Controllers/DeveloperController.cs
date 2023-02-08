@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using SteamNewBackend.Database;
 using SteamNewBackend.Models;
 using SteamNewBackend.Models.Dto;
+using SteamNewBackend.Services;
 
 namespace SteamNewBackend.Controllers
 {
@@ -10,36 +11,29 @@ namespace SteamNewBackend.Controllers
     [Route("api/[controller]")]
     public class DeveloperController : ControllerBase
     {
-        private readonly ILogger<MariaDbContext> _logger;
+        private readonly IDeveloperService _developerService;
         private readonly MariaDbContext _mariaDb;
-        public DeveloperController(ILogger<MariaDbContext> logger, MariaDbContext context)
+        public DeveloperController(IDeveloperService developerService, MariaDbContext context)
         {
-            _logger = logger;
+            _developerService = developerService;
             _mariaDb = context;
         }
 
         [Authorize]
         [HttpPost("addDeveloper")]
-        public IActionResult AddDeveloper([FromForm] NewDevTeam dev)
+        public async Task<IActionResult> AddDeveloper([FromForm] NewDevTeam newDeveloper)
         {
             try
             {
-                DevTeam newDev = new()
-                {
-                    DevTeam_name = dev.Name
-                };
+                if (newDeveloper == null) return BadRequest();
 
-                if (_mariaDb.DevTeams.Where(d => d.DevTeam_name == newDev.DevTeam_name).Any())
-                    return BadRequest();
-                else
+                var result = await _developerService.AddDeveloper(newDeveloper);
+                if (result == 0) return BadRequest();
+
+                return Ok(new
                 {
-                    _mariaDb.DevTeams.Add(newDev);
-                    _mariaDb.SaveChanges();
-                    return Ok(new
-                    {
-                        Message = "Developer successfully created!"
-                    });
-                }
+                    Message = "Developer successfully created!"
+                });
             }
             catch
             {
@@ -47,15 +41,18 @@ namespace SteamNewBackend.Controllers
             }
         }
 
-        [HttpGet("getDeveloper/{id}")]
-        public IActionResult GetDeveloper(int id)
+        [HttpGet("getDeveloper/{developerId}")]
+        public async Task<IActionResult> GetDeveloper(int developerId)
         {
             try
             {
-                var dev = _mariaDb.DevTeams.FirstOrDefault(d => d.Id == id);
+                var developer = await _developerService.GetDeveloper(developerId);
 
-                if (dev != null) return Ok(dev);
-                else return NotFound();
+                if (developer == null) return NotFound(new
+                {
+                    Message = "Users doesn't exist!"
+                });
+                return Ok(developer);
             }
             catch
             {
@@ -64,14 +61,14 @@ namespace SteamNewBackend.Controllers
         }
 
         [HttpGet("getDevelopers")]
-        public IActionResult GetDevelopers()
+        public async Task<IActionResult> GetAllDevelopers()
         {
             try
             {
-                var devTeams = _mariaDb.DevTeams.ToList();
-                
-                if(devTeams != null) return Ok(devTeams);
-                else return NotFound();
+                var developers = await _developerService.GetAllDevelopers();
+
+                if (developers == null) return NotFound();
+                return Ok(developers);
             }
             catch
             {
@@ -80,22 +77,17 @@ namespace SteamNewBackend.Controllers
         }
 
         [Authorize]
-        [HttpDelete("deleteDeveloper/{id}")]
-        public IActionResult DeleteDeveloper([FromRoute] int id)
+        [HttpDelete("deleteDeveloper/{developerId}")]
+        public async Task<IActionResult> DeleteDeveloper([FromRoute] int developerId)
         {
             try
             {
-                var dev = _mariaDb.DevTeams.FirstOrDefault(d => d.Id == id);
-                if (dev != null)
+                var result = await _developerService.DeleteDeveloper(developerId);
+                if (result == 0) return NotFound();
+                return Ok(new
                 {
-                    _mariaDb.DevTeams.Remove(dev);
-                    _mariaDb.SaveChanges();
-                    return Ok(new
-                    {
-                        Message = "Developer successfully deleted!"
-                    });
-                }
-                else return NotFound();
+                    Message = "Developer successfully deleted!"
+                });
             }
             catch
             {
@@ -105,21 +97,19 @@ namespace SteamNewBackend.Controllers
 
         [Authorize]
         [HttpPut("updateDeveloper")]
-        public IActionResult UpdateDeveloper([FromForm] DevTeam newDev)
+        public async Task<IActionResult> UpdateDeveloper([FromForm] DevTeam updateDeveloperData)
         {
             try
             {
-                var dev = _mariaDb.DevTeams.FirstOrDefault(d => d.Id == newDev.Id);
-                if (dev != null)
+                if (updateDeveloperData == null) return BadRequest();
+
+                var result = await _developerService
+                    .UpdateDeveloper(updateDeveloperData);
+                if (result == 0) return NotFound();
+                return Ok(new
                 {
-                    dev.DevTeam_name = newDev.DevTeam_name;
-                    _mariaDb.SaveChanges();
-                    return Ok(new
-                    {
-                        Message = "Developer successfully updated!"
-                    });
-                }
-                else return NotFound();
+                    Message = "Developer successfully updated!"
+                });
             }
             catch
             {
